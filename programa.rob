@@ -1,0 +1,28 @@
+///////////////////////////////////////////////
+// 4 Segundos para 45º
+// 8 Segundos para 90º
+///////////////////////////////////////////////
+
+///////////////////////////////////////////////
+// Motor	Direção					Localização
+///////////////////////////////////////////////
+// 1		Direita -> Esquerda		Base
+// 2		Baixo -> Cima			Ombro Garra
+// 3		Baixo -> Cima			Cotovelo Garra
+// 4		Baixo -> Cima			Munheca Garra
+// 5		Baixo -> Cima			Garra
+///////////////////////////////////////////////
+
+wait_button_press;
+
+rotate 3 -2200;
+rotate 2 2200;			// Move para frente
+rotate 3 260;			// Move a garra para baixo
+magnet 1;				// Liga o imã
+
+wait_button_press;
+
+rotate 3 -3800;			// Move a garra para cima
+rotate 1 -1500;			// Gira a base para a esquerda
+rotate 3 1600;			// Move a garra para baixo
+magnet 0;				// Solta o imã

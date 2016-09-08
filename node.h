@@ -19,6 +19,38 @@
 using namespace std;
 using namespace llvm;
 
+///////////////////////////////////////////////////////////////////////////////
+
+extern int yylineno;
+extern char *yytext;
+extern char *build_filename;
+
+///////////////////////////////////////////////////////////////////////////////
+
+#define LOG_ERROR_EX(fmt, ...)fprintf(stderr, "%s:%d: error: " fmt "\n", build_filename, yylineno, ## __VA_ARGS__ ); exit(-1);
+
+///////////////////////////////////////////////////////////////////////////////
+	
+struct Motor {
+	char nomeHO[4];
+	char nomeAH[4];
+		
+	const char* operator [](bool bAntihorario){
+		return bAntihorario ? nomeAH : nomeHO;
+	}	
+};
+	
+///////////////////////////////////////////////////////////////////////////////
+	
+#define EQ_OP 0
+#define NE_OP 1
+#define GE_OP 2
+#define LE_OP 3
+#define GT_OP 4
+#define LT_OP 5
+
+///////////////////////////////////////////////////////////////////////////////
+
 class Node;
 class Stmts;
 #include "bison.hpp"
@@ -43,40 +75,124 @@ extern Function *init;
 extern Function *print;
 extern Function *i16div;
 
+///////////////////////////////////////////////////////////////////////////////
+
 class Node {
 public:
-	virtual Value *generate(Function *func, BasicBlock *block) = 0;
+	virtual Value* generate(Function *func, BasicBlock *block) = 0;
 	virtual ~Node() {}
+	
+	virtual bool IsNegative() const {
+		return false;
+	}
+	
+	virtual int AbsValue() const {
+		return 0;
+	}
+	
+	virtual int GetValue() const {
+		return 0;
+	}
+	
 };
 
-class Int8: public Node {
-private:
-	char number;
+///////////////////////////////////////////////////////////////////////////////
+
+class DummyNode : public Node {
 public:
-	Int8(char n): number(n) {}
-	Value *generate(Function *func, BasicBlock *block) {
-		return ConstantInt::get(Type::getInt8Ty(getGlobalContext()), number);
+
+	DummyNode(){
+		
+	}
+
+	virtual ~DummyNode(){
+		
+	}
+	
+	virtual Value* generate(Function *func, BasicBlock *block) {
+		
 	}
 };
 
-class Int16: public Node {
-private:
-	short number;
+///////////////////////////////////////////////////////////////////////////////
+
+class NumberNode : public Node {
 public:
-	Int16(short n): number(n) {}
-	Value *generate(Function *func, BasicBlock *block) {
-		return ConstantInt::get(Type::getInt16Ty(getGlobalContext()), number);
+	
+	virtual ~NumberNode(){
+		
 	}
+	
 };
 
-class Int32: public Node {
-private:
-	int number;
+class Int8: public NumberNode {
 public:
-	Int32(int n): number(n) {}
+	Int8(char n): m_Value(n) {}
 	Value *generate(Function *func, BasicBlock *block) {
-		return ConstantInt::get(Type::getInt32Ty(getGlobalContext()), number);
+		return ConstantInt::get(Type::getInt8Ty(getGlobalContext()), m_Value);
 	}
+	
+	virtual bool IsNegative() const{
+		return m_Value < 0;
+	}
+	
+	virtual int AbsValue() const{
+		return abs(m_Value);
+	}
+	
+private:
+	
+	char								m_Value;
+	
+};
+
+class Int16: public NumberNode {
+public:
+	Int16(short n): m_Value(n) {
+		
+	}
+	
+	Value *generate(Function *func, BasicBlock *block) {
+		return ConstantInt::get(Type::getInt16Ty(getGlobalContext()), m_Value);
+	}
+	
+	virtual bool IsNegative() const{
+		return m_Value < 0;
+	}
+	
+	virtual int GetValue() const {
+		return m_Value;
+	}
+	
+	virtual int AbsValue() const{
+		return abs(m_Value);
+	}
+	
+private:
+
+	short								m_Value;
+	
+};
+
+class Int32: public NumberNode {
+public:
+	Int32(int n): m_Value(n) {}
+	Value *generate(Function *func, BasicBlock *block) {
+		return ConstantInt::get(Type::getInt32Ty(getGlobalContext()), m_Value);
+	}	
+	
+	virtual bool IsNegative() const{
+		return m_Value < 0;
+	}
+	
+	virtual int AbsValue() const{
+		return abs(m_Value);
+	}
+	
+private:
+	
+	int								m_Value;
+	
 };
 
 class Float: public Node {
@@ -528,15 +644,14 @@ public:
 	}
 };
 
-/*
-class _: public Node {
-private:
-public:
-	_ () {}
-	Value *generate(Function *func, BasicBlock *block) {
-	}
-};
-*/
+///////////////////////////////////////////////////////////////////////////////
+// Implementações da Linguagem
+
+Node* RotateCommand(Node* pEngineId, Node* pTimeAmount);
+Node* MagnetCommand(Node* pValue);
+Node* WaitButtonPressCommand();
+
+///////////////////////////////////////////////////////////////////////////////
 
 #endif
 
